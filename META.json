@@ -49,7 +49,7 @@
       "runtime" : {
          "requires" : {
             "Carp" : "0",
-            "Cwd" : "0",
+            "Cwd" : "3.30",
             "Encode" : "0",
             "perl" : "5.010",
             "strict" : "0",
@@ -58,6 +58,7 @@
       },
       "test" : {
          "requires" : {
+            "Cwd" : "3.30",
             "File::Spec" : "0",
             "IO::Handle" : "0",
             "IPC::Open3" : "0",
@@ -71,12 +72,13 @@
       "bugtracker" : {
          "web" : "https://github.com/HayoBaan/Cwd-utf8/issues"
       },
+      "homepage" : "http://metacpan.org/release/Cwd-utf8/",
       "repository" : {
          "type" : "git",
          "url" : "git://github.com/HayoBaan/Cwd-utf8.git",
          "web" : "https://github.com/HayoBaan/Cwd-utf8"
       }
    },
-   "version" : "0.001"
+   "version" : "0.002"
 }
 
