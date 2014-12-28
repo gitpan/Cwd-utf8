@@ -15,7 +15,7 @@
    "name" : "Cwd-utf8",
    "no_index" : {
       "directory" : [
-         "test_files"
+         "test_data"
       ]
    },
    "prereqs" : {
@@ -49,7 +49,7 @@
       "runtime" : {
          "requires" : {
             "Carp" : "0",
-            "Cwd" : "3.30",
+            "Cwd" : "0",
             "Encode" : "0",
             "perl" : "5.010",
             "strict" : "0",
@@ -58,13 +58,18 @@
       },
       "test" : {
          "requires" : {
-            "Cwd" : "3.30",
             "File::Spec" : "0",
             "IO::Handle" : "0",
             "IPC::Open3" : "0",
             "Test::More" : "0.96",
             "perl" : "5.010"
          }
+      }
+   },
+   "provides" : {
+      "Cwd::utf8" : {
+         "file" : "lib/Cwd/utf8.pm",
+         "version" : "0.003"
       }
    },
    "release_status" : "stable",
@@ -79,6 +84,6 @@
          "web" : "https://github.com/HayoBaan/Cwd-utf8"
       }
    },
-   "version" : "0.002"
+   "version" : "0.003"
 }
 

@@ -5,7 +5,7 @@ use Test::More 0.96;
 use Encode qw(decode FB_CROAK);
 
 # Test files
-my $test_root     = "test_files";
+my $test_root     = "test_data";
 my $unicode_dir   = "\x{30c6}\x{30b9}\x{30c8}\x{30c6}\x{3099}\x{30a3}\x{30ec}\x{30af}\x{30c8}\x{30ea}";
 
 if ($^O eq 'dos' or $^O eq 'os2') {
@@ -29,7 +29,7 @@ subtest utf8cwd => sub {
     my $currentdir = getcwd();
 
     chdir("$test_root/$unicode_dir") or die "Couldn't chdir to $test_root/$unicode_dir: $!";
-    use Cwd 3.30;
+    use Cwd;
     my @cwdirs = (getcwd(), cwd(), fastcwd(), fastgetcwd());
 
     my @utf8_cwdirs;
@@ -47,17 +47,17 @@ subtest utf8cwd => sub {
 
 # Test abst_path, real_path, fast_abs_path
 subtest utf8abs_path => sub {
-    plan tests => 9;
+    plan tests => 12;
 
-    use Cwd 3.30;
-    my @abs = (Cwd::abs_path("$test_root/$unicode_dir"), Cwd::realpath("$test_root/$unicode_dir"), Cwd::fast_abs_path("$test_root/$unicode_dir"));
+    use Cwd qw(abs_path realpath fast_abs_path fast_realpath);
+    my @abs = (abs_path("$test_root/$unicode_dir"), realpath("$test_root/$unicode_dir"), fast_abs_path("$test_root/$unicode_dir"), fast_realpath("$test_root/$unicode_dir"));
 
     my @utf8_abs;
     {
-        use Cwd::utf8;
-        @utf8_abs = (Cwd::abs_path("$test_root/$unicode_dir"), Cwd::realpath("$test_root/$unicode_dir"), Cwd::fast_abs_path("$test_root/$unicode_dir"));
+        use Cwd::utf8 qw(abs_path realpath fast_abs_path fast_realpath);
+        @utf8_abs = (abs_path("$test_root/$unicode_dir"), realpath("$test_root/$unicode_dir"), fast_abs_path("$test_root/$unicode_dir"), fast_realpath("$test_root/$unicode_dir"));
     }
-    for (my $i=0 ; $i<3; $i++) {
+    for (my $i=0 ; $i<4; $i++) {
         like $utf8_abs[$i] => qr/\/$unicode_dir$/;
         isnt $abs[$i] => $utf8_abs[$i];
         is   decode('UTF-8', $abs[$i], FB_CROAK) => $utf8_abs[$i];
