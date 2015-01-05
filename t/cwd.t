@@ -2,64 +2,101 @@
 use strict;
 use warnings;
 use Test::More 0.96;
-use Encode qw(decode FB_CROAK);
+use Encode qw(encode decode FB_CROAK);
 
-# Test files
-my $test_root     = "test_data";
+# Enable utf-8 encoding so we do not get Wide character in print
+# warnings when reporting test failures
+use open qw{:encoding(UTF-8) :std};
+
+plan skip_all => "Skipped: $^O does not have proper utf-8 file system support"
+    if ($^O =~ /MSWin32|cygwin|dos|os2/);
+
+# Create test files
+my $test_root     = "corpus.tmp";
 my $unicode_dir   = "\x{30c6}\x{30b9}\x{30c8}\x{30c6}\x{3099}\x{30a3}\x{30ec}\x{30af}\x{30c8}\x{30ea}";
+mkdir $test_root
+    or die "Unable to create directory $test_root: $!"
+    unless -d $test_root;
+mkdir "$test_root/$unicode_dir"
+    or die "Unable to create directory $test_root/$unicode_dir: $!"
+    unless -d "$test_root/$unicode_dir";
 
-if ($^O eq 'dos' or $^O eq 'os2') {
-    plan skip_all => "Skipped: $^O does not have proper utf-8 file system support";
-} else {
-    # Create test files
-    mkdir $test_root
-        or die "Unable to create directory $test_root: $!"
-        unless -d $test_root;
-    mkdir "$test_root/$unicode_dir"
-        or die "Unable to create directory $test_root/$unicode_dir: $!"
-        unless -d "$test_root/$unicode_dir";
+# Check utf8 and non-utf8 results
+sub check_dirs {
+    my ($test, $utf8, $non_utf8) = @_;
+    my $utf8_encoded     = encode('UTF-8', "$utf8", FB_CROAK);     # Quotes to prevent tampering by encode/decode!
+    my $non_utf8_decoded = decode('UTF-8', "$non_utf8", FB_CROAK); # Quotes to prevent tampering by encode/decode!
+
+    plan tests => 3;
+
+    like $utf8 => qr/\/$unicode_dir$/, "$test found correct dir";
+    is   $utf8_encoded => $non_utf8,   "$test encoded utf8 dir matches non-utf8";
+    is   $utf8 => $non_utf8_decoded,   "$test utf8 dir matches decoded non-utf8";
 }
 
-plan tests => 2;
+plan tests => 9;
 
-# Test getcwd, cwd, fastcwd
-subtest utf8cwd => sub {
-    plan tests => 8;
+use Cwd;
+my $currentdir = getcwd();
 
-    my $currentdir = getcwd();
+# Test getcwd, cwd, fastgetcwd, fastcwd
+chdir("$test_root/$unicode_dir") or die "Couldn't chdir to $test_root/$unicode_dir: $!";
+for my $test (qw(getcwd cwd fastgetcwd fastcwd)) {
+    subtest "utf8$test" => sub {
+        # To keep results in
+        my $utf8;
+        my $non_utf8;
+        {
+            use Cwd;
+            $non_utf8 = (\&{$test})->();
+        }
 
-    chdir("$test_root/$unicode_dir") or die "Couldn't chdir to $test_root/$unicode_dir: $!";
-    use Cwd;
-    my @cwdirs = (getcwd(), cwd(), fastcwd(), fastgetcwd());
-
-    my @utf8_cwdirs;
-    {
-        use Cwd::utf8;
-        @utf8_cwdirs = (getcwd(), cwd(), fastcwd(), fastgetcwd());
+        {
+            use Cwd::utf8;
+            $utf8 = (\&{$test})->();
+        }
+        check_dirs($test, $utf8, $non_utf8);
     }
-    for (my $i=0 ; $i<4; $i++) {
-        isnt $cwdirs[$i] => $utf8_cwdirs[$i];
-        is   decode('UTF-8', $cwdirs[$i], FB_CROAK) => $utf8_cwdirs[$i];
-    }
+}
 
-    chdir($currentdir) or die "Can't chdir back to original dir $currentdir: $!";
+# Check no Cwd::utf8;
+subtest no_cwd_utf8 => sub {
+    my $test = "no Cwd::utf8";
+
+    # To keep results in
+    my $utf8;
+    my $non_utf8;
+
+    use Cwd::utf8;
+    $utf8 = getcwd();
+
+    no Cwd::utf8;
+    $non_utf8 = getcwd();
+
+    check_dirs($test, $utf8, $non_utf8);
 };
 
-# Test abst_path, real_path, fast_abs_path
-subtest utf8abs_path => sub {
-    plan tests => 12;
+chdir($currentdir) or die "Can't chdir back to original dir $currentdir: $!";
 
-    use Cwd qw(abs_path realpath fast_abs_path fast_realpath);
-    my @abs = (abs_path("$test_root/$unicode_dir"), realpath("$test_root/$unicode_dir"), fast_abs_path("$test_root/$unicode_dir"), fast_realpath("$test_root/$unicode_dir"));
+# Test abs_path, realpath, fast_abs_path, fast_realpath
+for my $test (qw(abs_path realpath fast_abs_path fast_realpath)) {
+    subtest "utf8$test" => sub {
+        # To keep results in
+        my $utf8;
+        my $non_utf8;
+        {
+            use Cwd qw(abs_path realpath fast_abs_path fast_realpath);
+            $non_utf8 = (\&{$test})->("$test_root/$unicode_dir");
+        }
 
-    my @utf8_abs;
-    {
-        use Cwd::utf8 qw(abs_path realpath fast_abs_path fast_realpath);
-        @utf8_abs = (abs_path("$test_root/$unicode_dir"), realpath("$test_root/$unicode_dir"), fast_abs_path("$test_root/$unicode_dir"), fast_realpath("$test_root/$unicode_dir"));
+        {
+            use Cwd::utf8 qw(abs_path realpath fast_abs_path fast_realpath);
+            $utf8 = (\&{$test})->("$test_root/$unicode_dir");
+        }
+        check_dirs($test, $utf8, $non_utf8);
     }
-    for (my $i=0 ; $i<4; $i++) {
-        like $utf8_abs[$i] => qr/\/$unicode_dir$/;
-        isnt $abs[$i] => $utf8_abs[$i];
-        is   decode('UTF-8', $abs[$i], FB_CROAK) => $utf8_abs[$i];
-    }
-};
+}
+
+# Cleanup temporarily created files and directories
+use File::Path qw(remove_tree);
+remove_tree($test_root) or die "Unable to remove $test_root";

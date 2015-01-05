@@ -3,11 +3,13 @@ abstract: 'Fully UTF-8 aware Cwd'
 author:
   - 'Hayo Baan <info@hayobaan.nl>'
 build_requires:
+  File::Path: '0'
   File::Spec: '0'
   IO::Handle: '0'
   IPC::Open3: '0'
   Module::Build: '0.28'
   Test::More: '0.96'
+  open: '0'
   perl: '5.010'
 configure_requires:
   ExtUtils::MakeMaker: '0'
@@ -22,11 +24,11 @@ meta-spec:
 name: Cwd-utf8
 no_index:
   directory:
-    - test_data
+    - corpus
 provides:
   Cwd::utf8:
     file: lib/Cwd/utf8.pm
-    version: '0.003'
+    version: '0.004'
 requires:
   Carp: '0'
   Cwd: '0'
@@ -38,4 +40,4 @@ resources:
   bugtracker: https://github.com/HayoBaan/Cwd-utf8/issues
   homepage: http://metacpan.org/release/Cwd-utf8/
   repository: git://github.com/HayoBaan/Cwd-utf8.git
-version: '0.003'
+version: '0.004'
